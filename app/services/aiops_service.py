@@ -3,7 +3,7 @@
 基于 LangGraph 官方教程实现
 """
 
-from typing import AsyncGenerator, Dict, Any
+from typing import AsyncGenerator, Dict, Any, Optional
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
 from loguru import logger
@@ -158,13 +158,15 @@ class AIOpsService:
 
     async def diagnose(
         self,
-        session_id: str = "default"
+        session_id: str = "default",
+        user_input: Optional[str] = None
     ) -> AsyncGenerator[Dict[str, Any], None]:
         """
-        AIOps 诊断接口（兼容旧接口）
+        AIOps 诊断接口
 
         Args:
             session_id: 会话ID
+            user_input: 用户输入的问题，为空时使用默认诊断任务
 
         Yields:
             Dict[str, Any]: 诊断过程的流式事件
@@ -245,7 +247,8 @@ class AIOpsService:
                 - 所有内容必须基于工具查询的真实数据，严禁编造
                 - 如果某个步骤失败，在结论中如实说明，不要跳过""")
 
-        async for event in self.execute(aiops_task, session_id):
+        task = user_input if user_input else aiops_task
+        async for event in self.execute(task, session_id):
             # 转换事件格式以兼容旧的 API
             if event.get("type") == "complete":
                 # 将 response 包装为 diagnosis 格式

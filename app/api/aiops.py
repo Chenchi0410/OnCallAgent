@@ -126,7 +126,8 @@ async def diagnose_stream(request: AIOpsRequest):
 
     async def event_generator():
         try:
-            async for event in aiops_service.diagnose(session_id=session_id):
+            user_input = request.question
+            async for event in aiops_service.diagnose(session_id=session_id, user_input=user_input):
                 # 发送事件
                 yield {
                     "event": "message",

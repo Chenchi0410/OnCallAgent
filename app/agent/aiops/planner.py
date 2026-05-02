@@ -45,7 +45,38 @@ planner_prompt = ChatPromptTemplate.from_messages(
                 - 每个步骤应该明确使用哪些工具(如果需要工具的话)来获取信息, 最好能同时提供工具执行所需要的参数
                 - 步骤之间应该有清晰的依赖关系
                 - 步骤描述要具体、可操作
+                - **每个步骤只包含一个明确的操作，不要使用条件判断（如"如果...则..."），Executor 无法处理条件逻辑**
                 - **如果有相关经验文档，请参考其中的方法和步骤制定计划**
+
+                ## 浏览器操作（Chrome CDP 工具）使用指南
+
+                当任务涉及网页浏览、信息抓取等操作时，请注意以下规则：
+
+                1. **最简单的正确流程**（推荐）：
+                   chrome_open("完整URL") → 从返回结果获取 targetId → chrome_snapshot(targetId) → 提取内容
+                   这个流程不需要先 list_tabs，直接打开目标页面即可
+
+                2. **chrome_navigate 需要先有 targetId**：如果要导航已有标签页，先用 chrome_list_tabs() 获取 targetId
+
+                3. **URL 必须准确真实**：在步骤中明确写出完整的 URL。**严禁编造 URL！** 如果不确定某个页面的 URL，在步骤中注明让 Executor 使用搜索引擎查找。
+                   常用真实 URL：
+                   - B站热搜: https://www.bilibili.com/v/popular/rank/all
+                   - B站动态: https://t.bilibili.com/
+                   - B站首页: https://www.bilibili.com/
+
+                4. **chrome_snapshot 获取的是页面语义快照**（类似无障碍树），包含所有可见文字内容
+
+                示例输入："查看哔哩哔哩热搜"
+                示例输出：
+                步骤1: 使用 chrome_open("https://www.bilibili.com/v/popular/rank/all") 打开 B 站排行榜页面，记录返回的 targetId
+                步骤2: 使用 chrome_snapshot(targetId) 获取页面语义快照，从快照中逐条提取标题和播放量数据
+                步骤3: 整理提取到的热搜信息，按排名列出前五条
+
+                示例输入："查看我的B站动态"
+                示例输出：
+                步骤1: 使用 chrome_open("https://t.bilibili.com/") 打开 B 站动态页面，记录返回的 targetId
+                步骤2: 使用 chrome_snapshot(targetId) 获取页面语义快照，逐条提取动态内容
+                步骤3: 整理并列出前五条动态内容
 
                 示例输入："分析当前系统的性能问题"
                 示例输出（假设有对应工具）：

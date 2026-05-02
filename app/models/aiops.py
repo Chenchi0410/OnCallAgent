@@ -8,16 +8,21 @@ from pydantic import BaseModel, Field
 
 class AIOpsRequest(BaseModel):
     """AIOps 诊断请求"""
-    
+
     session_id: Optional[str] = Field(
         default="default",
         description="会话ID，用于追踪诊断历史"
     )
-    
+    question: Optional[str] = Field(
+        default=None,
+        description="用户输入的问题，为空时使用默认诊断任务"
+    )
+
     class Config:
         json_schema_extra = {
             "example": {
-                "session_id": "session-123"
+                "session_id": "session-123",
+                "question": "帮我检查一下 CPU 告警"
             }
         }
 

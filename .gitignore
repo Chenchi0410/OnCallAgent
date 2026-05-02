@@ -20,6 +20,9 @@ wheels/
 .installed.cfg
 *.egg
 
+# openspec
+openspec/
+
 # Virtual Environment
 venv/
 env/

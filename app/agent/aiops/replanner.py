@@ -167,8 +167,16 @@ async def replanner(state: PlanExecuteState) -> Dict[str, Any]:
     )
 
     # 格式化已执行的步骤
+    # 对数据提取步骤（快照、html等）保留更多内容
+    def _format_step_result(step: str, result: str) -> str:
+        is_data_step = any(kw in step for kw in ["快照", "snapshot", "提取", "html", "获取页面"])
+        max_len = 8000 if is_data_step else 800
+        if len(result) > max_len:
+            return f"步骤: {step}\n结果: {result[:max_len]}...\n（内容已截断，原始长度: {len(result)}）"
+        return f"步骤: {step}\n结果: {result}"
+
     steps_summary = "\n".join([
-        f"步骤: {step}\n结果: {result[:300]}..."
+        _format_step_result(step, result)
         for step, result in past_steps
     ])
 
@@ -269,9 +277,13 @@ async def _generate_response(state: PlanExecuteState, llm: ChatQwen) -> Dict[str
         # 处理返回结果
         if isinstance(response_obj, Response):
             final_response = response_obj.response
+        elif isinstance(response_obj, dict):
+            final_response = response_obj.get("response", "")
+        elif response_obj is None:
+            logger.warning("Replanner 返回了 None，使用回退方案")
+            raise ValueError("LLM 返回了 None，structured_output 可能解析失败")
         else:
-            # 如果返回的是字典
-            final_response = response_obj.get("response", "")  # type: ignore
+            final_response = str(response_obj)
 
         logger.info(f"最终响应生成完成，长度: {len(final_response)}")
 
